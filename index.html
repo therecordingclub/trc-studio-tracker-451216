@@ -315,7 +315,7 @@ h1.title{font-size:29px;font-weight:800}
 .cproj .cn{font-family:'Geologica';font-weight:700;font-size:16px}
 .cproj .cmeta{font-size:12.5px;color:var(--ink-dim);margin-top:2px}
 .cbarwrap{flex:1;max-width:230px;min-width:120px}
-.cbar{height:7px;border-radius:999px;background:var(--elev);overflow:hidden}
+.cbar{height:8px;border-radius:999px;background:#1e1e2b;overflow:hidden}
 .cbar-fill{height:100%;border-radius:999px}
 .cbar-l{font-size:11px;color:var(--ink-faint);font-weight:700;margin-top:6px;text-align:right;text-transform:capitalize}
 
@@ -370,6 +370,25 @@ textarea.inp{width:100%;resize:vertical;min-height:78px;line-height:1.5}
 .foot-note b{color:var(--ink-dim)}
 
 .ci .ct,.ci .cs,.tool .tn,.tool .ts,.tool .tmain,.cproj .cn,.cproj .cmeta{display:block}
+/* attention + activity */
+.att{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line-soft);padding:11px 8px;cursor:pointer;border-radius:8px;color:var(--ink);transition:.14s}
+.att:last-child{border-bottom:0}.att:hover{background:var(--panel-2)}.att:hover .chev{transform:translateX(3px);color:var(--ink)}
+.att-main{flex:1;min-width:0}.att-t{font-family:'Geologica';font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;min-width:0}.att-s{font-size:12px;color:var(--ink-faint);display:block;margin-top:1px}
+.att-r{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.rpill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.rpill.over{background:rgba(240,50,34,.14);color:#ff8a7a}.rpill.notes{background:rgba(240,135,62,.14);color:var(--st-revisions)}.rpill.wait{background:rgba(56,189,248,.14);color:var(--st-review)}
+.act{display:flex;align-items:center;gap:11px;padding:10px 4px;border-bottom:1px solid var(--line-soft);font-size:13.5px}.act:last-child{border-bottom:0}
+.act .ad{width:8px;height:8px;border-radius:50%;flex:none}.act .at{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.act .adate{font-size:11.5px;color:var(--ink-faint);white-space:nowrap}
+/* due + next */
+.due{font-size:11px;font-weight:700;color:var(--ink-dim);border:1px solid var(--line);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.due.over{color:#ff8a7a;border-color:rgba(240,50,34,.45);background:rgba(240,50,34,.1)}
+/* clickable stat cards */
+.stat[data-action]{cursor:pointer;transition:.14s}.stat[data-action]:hover{border-color:#3a3a55}.stat[aria-pressed="true"]{border-color:var(--ink)}
+/* client notes as to-dos */
+.fwho{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fdone{margin-left:auto;font-size:11px;color:var(--ink-faint);display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:700;white-space:nowrap}.fdone input{accent-color:var(--st-approved);margin:0;width:14px;height:14px}
+.fb.done .ftext{color:var(--ink-faint);text-decoration:line-through}.fb.done .fav{opacity:.5}.fb.done .fdone{color:var(--st-approved)}
+.notes-prog{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-dim);margin-bottom:12px}.notes-prog .d{width:8px;height:8px;border-radius:50%}
 @media (max-width:900px){
   .stats{grid-template-columns:repeat(3,1fr)}
   .cols,.prog{grid-template-columns:1fr}
@@ -485,6 +504,14 @@ const projects=[
     time:[{id:uid("t"),date:"2026-08-15",hours:2.0,note:"Assembly",who:"am"}],versions:[]},
 ];
 
+/* ---- derived fields: due dates, internal notes, note status ---- */
+const DUE={a1:"2026-09-05",a2:"2026-08-30",a3:"2026-08-28",a5:"2026-09-12",a6:"2026-09-20",v1:"2026-09-08",v2:"2026-09-02",v3:"2026-08-29",v5:"2026-09-15"};
+const INOTES={a1:"Maya wants the 808 heavier than the reference. Keep the air on the chorus vocal.",a3:"Elena listens on AirPods, always check the hats on earbuds before sending.",v1:"Match the color grade from the Neon Alley video, she loved that one.",v3:"Lower thirds in Geologica. Interview audio needs a de-esser pass."};
+projects.forEach(p=>{p.due=DUE[p.id]||null;p.notes=INOTES[p.id]||"";p.versions.forEach(v=>v.feedback.forEach(f=>{if(f.done===undefined)f.done=false;}));});
+projects.find(p=>p.id==="a1").versions[0].feedback[0].done=true;
+projects.find(p=>p.id==="a3").versions[0].feedback[0].done=true;
+projects.find(p=>p.id==="v3").versions[0].feedback[0].done=true;
+
 /* ============ HELPERS ============ */
 const $=s=>document.querySelector(s);
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -501,6 +528,26 @@ function lastActivity(p){const ds=[...p.time.map(t=>t.date),...p.versions.map(v=
 function waveBars(seed,n=42){let x=0;for(const c of seed)x=(x*131+c.charCodeAt(0))>>>0;const out=[];for(let i=0;i<n;i++){x=(x*1103515245+12345)>>>0;const base=0.35+((x>>7)%100)/100*0.65;const env=Math.sin((i/n)*Math.PI);out.push(Math.max(0.16,base*(0.55+0.6*env)));}return out;}
 function pill(status){const s=STATUS[status];return`<span class="pill" style="background:${s.color}1f;color:${s.color}"><span class="d" style="background:${s.color}"></span>${s.label}</span>`;}
 function progressPct(status){return{queued:8,mixing:40,editing:40,review:65,revisions:80,approved:100}[status]||0;}
+function daysAgo(iso){const[y,m,d]=iso.split("-").map(Number);const t=new Date();return Math.round((new Date(t.getFullYear(),t.getMonth(),t.getDate())-new Date(y,m-1,d))/86400000);}
+function isOverdue(p){return!!p.due&&p.status!=="approved"&&daysAgo(p.due)>0;}
+function dueLabel(p){if(!p.due||p.status==="approved")return"";const d=daysAgo(p.due);return d>0?`Overdue ${d}d`:(d===0?"Due today":`Due ${fmtDate(p.due)}`);}
+function openNotes(p){let n=0;p.versions.forEach(v=>v.feedback.forEach(f=>{if(!f.done)n++;}));return n;}
+function nextStep(p){const first=p.client.split(" ")[0];
+  if(p.status==="queued")return"Not started";
+  if(p.status==="mixing"||p.status==="editing"){const last=p.time.length?p.time[p.time.length-1].date:null;return last?`In progress, last session ${fmtDate(last)}`:"In progress";}
+  if(p.status==="review"){const v=[...p.versions].reverse().find(x=>x.sent);const d=v?daysAgo(v.date):0;return`Waiting on ${first}${d>0?` for ${d}d`:""}`;}
+  if(p.status==="revisions"){const n=openNotes(p);return`${n} note${n===1?"":"s"} to action`;}
+  if(p.status==="approved"){const v=[...p.versions].reverse().find(x=>x.approved);const f=v&&v.feedback.length?v.feedback[v.feedback.length-1].date:(v?v.date:null);return`Approved${f?" "+fmtDate(f):""}`;}
+  return"";}
+function attention(){return projects.filter(p=>p.status!=="approved").map(p=>{const r=[];if(isOverdue(p))r.push(dueLabel(p));if(p.status==="revisions"){const n=openNotes(p);if(n)r.push(`${n} note${n===1?"":"s"} to action`);}if(p.status==="review"){const v=[...p.versions].reverse().find(x=>x.sent);const d=v?daysAgo(v.date):0;if(d>=3)r.push(`Waiting on ${p.client.split(" ")[0]} ${d}d`);}return r.length?{p,reasons:r}:null;}).filter(Boolean).sort((a,b)=>(isOverdue(b.p)?1:0)-(isOverdue(a.p)?1:0));}
+const ACT_COLOR={time:"var(--gold)",version:"var(--accent)",note:"var(--st-revisions)",approved:"var(--st-approved)",file:"var(--st-review)"};
+function activityFeed(){const ev=[];projects.forEach(p=>{const first=p.client.split(" ")[0];
+  p.time.forEach(t=>ev.push({date:t.date,kind:"time",text:`${(PEOPLE[t.who]||PEOPLE[p.person]).name} logged ${fmtHours(t.hours)}h on ${p.title}`}));
+  p.versions.forEach(v=>{ev.push({date:v.date,kind:"version",text:`${v.v} ${v.name} ${v.sent?"shared with "+first:"added"} on ${p.title}`});
+    v.feedback.forEach(f=>ev.push({date:f.date,kind:"note",text:`${f.who.split(" ")[0]} left notes on ${p.title} ${v.v}`}));
+    if(v.approved){const d=v.feedback.length?v.feedback[v.feedback.length-1].date:v.date;ev.push({date:d,kind:"approved",text:`${first} approved ${p.title}`});}});
+  p.intake.forEach(f=>ev.push({date:f.date,kind:"file",text:`${f.from==="client"?first+" sent":"Studio added"} ${f.name} to ${p.title}`}));});
+  return ev.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,9);}
 
 /* ============ ROUTER ============ */
 function render(){
@@ -513,15 +560,15 @@ function render(){
 function renderNav(){
   const tabs=[["overview","Overview",null],["mix","Mix Room",IC.sliders],["video","Video Post",IC.film]];
   $("#navtabs").innerHTML=tabs.map(([k,l,ic])=>`<button class="navtab" data-nav="${k}" aria-current="${state.section===k}">${ic?ic:""}${l}</button>`).join("")
-    +`<span class="nav-div"></span><button class="navtab client" data-nav="client" aria-current="${state.section==="client"}">${IC.users}Client view</button>`;
+    +`<span class="nav-div"></span><button class="navtab client" data-nav="client" aria-current="${state.section==="client"}">${IC.users}Client portal</button>`;
   const isClient=state.section==="client";
-  $("#rolechip").innerHTML=`<span class="d" style="background:${isClient?"var(--accent)":"var(--st-approved)"}"></span>${isClient?"Client view":"Admin"}`;
+  $("#rolechip").innerHTML=`<span class="d" style="background:${isClient?"var(--accent)":"var(--st-approved)"}"></span>${isClient?"Client portal":"Admin"}`;
 }
 
 /* ============ OVERVIEW ============ */
 function renderOverview(){
   clearPlayers();
-  const A=byMedium("audio"),V=byMedium("video");
+  const A=byMedium("audio"),V=byMedium("video"),att=attention(),feed=activityFeed();
   const totalH=projects.reduce((a,p)=>a+projectHours(p),0);
   const inReview=projects.filter(p=>p.status==="review").length;
   const approved=projects.filter(p=>p.status==="approved").length;
@@ -535,6 +582,9 @@ function renderOverview(){
     {t:"Video Post tracker",s:"Same flow for MP4 cuts over Dropbox"},
     {t:"Client portal",s:"Members send files, review versions, leave notes, track progress"},
     {t:"File intake, two sources",s:"Clients send stems and footage; we add what we record here"},
+    {t:"Attention + activity dashboard",s:"Overdue, notes to action, waiting on client, and a live feed of everything that happened"},
+    {t:"Due dates, internal notes, note tracking",s:"Per-project deadlines, private engineer notes, each client note checked off as it is actioned"},
+    {t:"Client approval",s:"Members approve a version themselves, which signs the project off"},
   ];
   const next=[
     {t:"Confirm the model",s:"One engineer or several, client login or private link"},
@@ -564,7 +614,18 @@ function renderOverview(){
       </div>
     </div>
 
-    <h2 class="section-h" style="margin-top:26px">Build progress</h2>
+    <div class="prog" style="margin-top:26px;margin-bottom:26px">
+      <div>
+        <h2 class="section-h">Needs attention <span class="count-badge">${att.length}</span></h2>
+        <div class="panel" style="padding:6px 8px">${att.length?att.map(({p,reasons})=>`<button class="att" data-action="open-any" data-id="${p.id}"><span class="avatar" style="width:36px;height:36px;border-radius:9px;background:${avColor(p.client)};font-size:12px">${initials(p.client)}</span><span class="att-main"><span class="att-t">${esc(p.title)}<span class="kind-chip">${esc(p.kind)}</span></span><span class="att-s">${esc(p.client)} · ${MEDIA[p.medium].tool}</span></span><span class="att-r">${reasons.map(r=>`<span class="rpill ${/Overdue/.test(r)?"over":(/note/.test(r)?"notes":"wait")}">${esc(r)}</span>`).join("")}</span><span class="chev">${IC.chev}</span></button>`).join(""):`<div class="empty" style="padding:14px">All clear. Nothing overdue, no notes waiting.</div>`}</div>
+      </div>
+      <div>
+        <h2 class="section-h">Recent activity</h2>
+        <div class="panel" style="padding:4px 14px">${feed.map(ev=>`<div class="act"><span class="ad" style="background:${ACT_COLOR[ev.kind]}"></span><span class="at">${esc(ev.text)}</span><span class="adate tnum">${fmtDate(ev.date)}</span></div>`).join("")}</div>
+      </div>
+    </div>
+
+    <h2 class="section-h">Build progress</h2>
     <div class="panel" style="padding:16px 18px">
       <div class="prog">
         <div class="checklist">
@@ -580,7 +641,7 @@ function renderOverview(){
       </div>
     </div>
 
-    <div class="foot-note"><b>Prototype for handoff.</b> Clickable mock with sample data (nothing saves). It is a visual spec for the build, one engineer named "John R." and an editor "Alex M." are placeholders. Use the tabs up top to move between Mix Room, Video Post, and the Client view.</div>`;
+    <div class="foot-note"><b>Prototype for handoff.</b> Clickable mock with sample data (nothing saves). It is a visual spec for the build, one engineer named "John R." and an editor "Alex M." are placeholders. Use the tabs up top to move between Mix Room, Video Post, and the Client portal.</div>`;
 }
 
 /* ============ MEDIUM LIST ============ */
@@ -607,7 +668,7 @@ function renderList(medium){
         <button class="btn primary" data-action="new-project" data-medium="${medium}">${IC.upload && '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>'}New project</button>
       </div>
     </div>
-    <div class="stats">${stats.map(s=>`<div class="stat ${s.gold?"gold":""}"><div class="l">${s.k?`<span class="d" style="background:${STATUS[s.k].color}"></span>`:""}${s.lab}</div><div class="v tnum">${s.val}</div><div class="s">${s.sub}</div></div>`).join("")}</div>
+    <div class="stats">${stats.map(s=>`<div class="stat ${s.gold?"gold":""}" data-action="set-filter" data-filter="${s.k||"all"}" data-medium="${medium}" aria-pressed="${state.filter===(s.k||"all")}" title="Click to filter"><div class="l">${s.k?`<span class="d" style="background:${STATUS[s.k].color}"></span>`:""}${s.lab}</div><div class="v tnum">${s.val}</div><div class="s">${s.sub}</div></div>`).join("")}</div>
     <div class="toolbar"><div class="tleft"><span class="h-sec">Projects</span><span class="count-badge" id="pcount"></span></div>
       <div class="tleft"><div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="search" type="text" placeholder="Search projects or clients" autocomplete="off" value="${esc(state.search)}"></div></div></div>
     <div class="filters" id="filters" style="margin-bottom:14px"></div>
@@ -628,8 +689,8 @@ function renderProjects(medium){
   if(!rows.length){host.innerHTML=`<div class="panel"><div class="empty">No projects match.</div></div>`;return;}
   host.innerHTML=rows.map(p=>{const person=PEOPLE[p.person];return`<button class="prow" data-action="open-project" data-id="${p.id}">
     <span class="avatar" style="background:${avColor(p.client)}">${initials(p.client)}</span>
-    <span class="pmain"><span class="pnamerow"><span class="pname">${esc(p.title)}</span><span class="kind-chip">${esc(p.kind)}</span></span><span class="pclient">${esc(p.client)} · ${person.name} · updated ${fmtDate(lastActivity(p))}</span></span>
-    <span class="pmeta"><span class="metric"><span class="mv g tnum">${fmtHrsShort(projectHours(p))}h</span><span class="ml">Hours</span></span><span class="metric"><span class="mv tnum">${p.versions.length}</span><span class="ml">${MEDIA[medium].fileNoun}s</span></span>${pill(p.status)}<span class="chev">${IC.chev}</span></span></button>`;}).join("");
+    <span class="pmain"><span class="pnamerow"><span class="pname">${esc(p.title)}</span><span class="kind-chip">${esc(p.kind)}</span></span><span class="pclient">${esc(p.client)} · ${person.name} · ${esc(nextStep(p))}</span></span>
+    <span class="pmeta">${dueLabel(p)?`<span class="due ${isOverdue(p)?"over":""}">${dueLabel(p)}</span>`:""}<span class="metric"><span class="mv g tnum">${fmtHrsShort(projectHours(p))}h</span><span class="ml">Hours</span></span><span class="metric"><span class="mv tnum">${p.versions.length}</span><span class="ml">${MEDIA[medium].fileNoun}s</span></span>${pill(p.status)}<span class="chev">${IC.chev}</span></span></button>`;}).join("");
 }
 
 /* ============ PROJECT PAGE (admin) ============ */
@@ -655,6 +716,8 @@ function renderProject(medium){
         <div class="pstat"><div class="l">Sessions</div><div class="v tnum">${p.time.length}</div></div>
         <div class="pstat"><div class="l">${M.fileNoun[0].toUpperCase()+M.fileNoun.slice(1)}s</div><div class="v tnum">${p.versions.length}</div></div>
         <div class="pstat"><div class="l">Files in</div><div class="v tnum">${p.intake.length}</div></div>
+        <div class="pstat"><div class="l">Due</div><div class="v" style="padding-top:2px"><input class="inp tnum" type="date" value="${p.due||""}" data-action="set-due" aria-label="Due date" style="padding:5px 8px;font-size:13px;${isOverdue(p)?"border-color:rgba(240,50,34,.6);color:#ff8a7a":""}"></div></div>
+        <div class="pstat"><div class="l">Next</div><div class="v" style="font-family:'Karla';font-weight:700;font-size:14px;padding-top:6px;color:${isOverdue(p)?"#ff8a7a":"var(--ink-dim)"}">${esc(isOverdue(p)?dueLabel(p)+" · "+nextStep(p):nextStep(p))}</div></div>
         <a class="folder-chip" href="${esc(p.folder||"#")}" target="_blank" rel="noopener">${IC.folder}Dropbox folder</a>
       </div>
     </div>
@@ -675,10 +738,14 @@ function renderProject(medium){
             <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn sm" data-action="add-file" data-kind="${medium==="audio"?"Stems":"Footage"}">${IC.upload}Add ${medium==="audio"?"stems":"footage"}</button><button class="btn sm ghost" data-action="add-file" data-kind="Recorded here">Log a studio recording</button></div>
           </div>
         </div>
+        <div class="card">
+          <div class="card-h"><h3>${IC.file}Internal notes</h3><span style="font-size:12px;color:var(--ink-faint)">private, never shown to the client</span></div>
+          <div class="card-b"><textarea class="inp" data-action="set-notes" placeholder="Session reminders, client preferences, what to check before the next send…" style="width:100%;min-height:80px;resize:vertical;line-height:1.5">${esc(p.notes||"")}</textarea></div>
+        </div>
       </div>
       <div class="card">
         <div class="card-h"><h3>${medium==="audio"?IC.music:IC.film}${medium==="audio"?"Mixes & versions":"Cuts & versions"}</h3>${lastSent&&p.status!=="approved"?`<button class="btn sm primary" data-action="send" data-vid="${lastSent.id}">${IC.send}Send latest to ${p.client.split(" ")[0]}</button>`:""}</div>
-        <div class="card-b"><div class="versions">${p.versions.length?p.versions.map(v=>renderVersion(p,v,medium)).join(""):`<div class="empty">${medium==="audio"?IC.music:IC.film}<div>No ${M.fileNoun}s yet. Add the first below with its Dropbox link.</div></div>`}</div>
+        <div class="card-b">${(()=>{let t=0,d=0;p.versions.forEach(v=>v.feedback.forEach(f=>{t++;if(f.done)d++;}));return t?`<div class="notes-prog"><span class="d" style="background:${d===t?"var(--st-approved)":"var(--st-revisions)"}"></span>${d} of ${t} client notes addressed</div>`:"";})()}<div class="versions">${p.versions.length?p.versions.map(v=>renderVersion(p,v,medium)).join(""):`<div class="empty">${medium==="audio"?IC.music:IC.film}<div>No ${M.fileNoun}s yet. Add the first below with its Dropbox link.</div></div>`}</div>
           <form class="addform" data-action="add-version" style="margin-top:14px;border-top:1px dashed var(--line);padding-top:14px"><div class="field" style="width:80px"><label>Label</label><input class="inp" type="text" name="v" placeholder="v1" required></div><div class="field" style="flex:1;min-width:120px"><label>Name</label><input class="inp" type="text" name="name" placeholder="${medium==="audio"?"Rough mix":"Rough cut"}" required></div><div class="field" style="flex:2;min-width:160px"><label>Dropbox link (${M.ext})</label><input class="inp" type="url" name="dropbox" placeholder="https://www.dropbox.com/s/…" required></div><div class="field" style="justify-content:flex-end"><label>&nbsp;</label><button class="btn" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add</button></div></form>
         </div>
       </div>
@@ -696,7 +763,7 @@ function renderVersion(p,v,medium){
     :`<span class="sent-state" style="color:var(--ink-faint)"><span class="d" style="background:var(--ink-faint)"></span>Not sent</span>`;
   const top=`<div class="track-top"><span class="vbadge ${isFinal?"final":""}">${esc(v.v)}</span><div class="vmeta"><div class="vname">${esc(v.name)} <span class="filetag">${MEDIA[medium].ext}</span></div><div class="vdate">Uploaded ${fmtDate(v.date)}</div></div><a class="dropbox-chip" href="${esc(v.dropbox)}" target="_blank" rel="noopener" title="${esc(v.dropbox)}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2 0 6l6 4 6-4-6-4Zm12 0-6 4 6 4 6-4-6-4ZM0 14l6 4 6-4-6-4-6 4Zm18-4-6 4 6 4 6-4-6-4ZM6 19l6 4 6-4-6-4-6 4Z"/></svg><span>Dropbox link</span></a></div>`;
   const foot=`<div class="track-foot">${sent}<div class="track-actions"><button class="btn sm ghost" data-action="copy-link" data-vid="${v.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>Copy link</button>${!v.approved?`<button class="btn sm ${v.sent?"":"primary"}" data-action="send" data-vid="${v.id}">${IC.send}${v.sent?"Resend":"Send to client"}</button>`:""}</div></div>`;
-  const fb=v.feedback.length?`<div class="feedback">${v.feedback.map(f=>`<div class="fb"><span class="fav" style="background:${avColor(f.who)}">${initials(f.who)}</span><div class="fbody"><div class="fwho">${esc(f.who)}<span class="fd">${fmtDate(f.date)}</span></div><div class="ftext">${esc(f.text)}</div></div></div>`).join("")}</div>`:"";
+  const fb=v.feedback.length?`<div class="feedback">${v.feedback.map((f,i)=>`<div class="fb ${f.done?"done":""}"><span class="fav" style="background:${avColor(f.who)}">${initials(f.who)}</span><div class="fbody"><div class="fwho">${esc(f.who)}<span class="fd">${fmtDate(f.date)}</span><label class="fdone"><input type="checkbox" data-action="toggle-note" data-vid="${v.id}" data-i="${i}" ${f.done?"checked":""}>${f.done?"Addressed":"Mark addressed"}</label></div><div class="ftext">${esc(f.text)}</div></div></div>`).join("")}</div>`:"";
   return`<div class="track" data-vid="${v.id}">${top}${mediaPlayer(v,medium)}${foot}${fb}</div>`;
 }
 function mediaPlayer(v,medium){
@@ -756,7 +823,7 @@ document.addEventListener("click",e=>{
   const a=t.dataset.action;
   if(a==="open-project"){state.selectedId=t.dataset.id;render();window.scrollTo(0,0);}
   else if(a==="go-list"){state.selectedId=null;render();window.scrollTo(0,0);}
-  else if(a==="set-filter"){state.filter=t.dataset.filter;renderFilters(t.dataset.medium);renderProjects(t.dataset.medium);}
+  else if(a==="set-filter"){state.filter=t.dataset.filter;renderFilters(t.dataset.medium);renderProjects(t.dataset.medium);document.querySelectorAll(".stat[data-filter]").forEach(s=>s.setAttribute("aria-pressed",String(s.dataset.filter===state.filter)));}
   else if(a==="toggle-timer")toggleTimer();
   else if(a==="del-time"){const p=projById(state.selectedId);p.time=p.time.filter(x=>x.id!==t.dataset.id);renderProject(p.medium);toast("Entry removed");}
   else if(a==="play")togglePlay(t.dataset.vid);
@@ -769,6 +836,8 @@ document.addEventListener("click",e=>{
   else if(a==="open-client")openClient(t.dataset.id);
   else if(a==="client-home"){state.clientId=null;render();window.scrollTo(0,0);}
   else if(a==="client-send")clientSend(t.dataset.kind);
+  else if(a==="client-approve")clientApprove(t.dataset.vid);
+  else if(a==="open-any"){const p=projById(t.dataset.id);if(!p)return;state.section=p.medium==="audio"?"mix":"video";state.selectedId=p.id;state.filter="all";state.search="";render();window.scrollTo(0,0);}
   else if(a==="close-modal")closeModal();
 });
 document.addEventListener("submit",e=>{
@@ -779,7 +848,12 @@ document.addEventListener("submit",e=>{
   else if(a==="create-project")createProject(fd);
   else if(a==="client-note")submitClientNote(fd.get("vid"),fd.get("text"));
 });
-document.addEventListener("change",e=>{const t=e.target.closest("[data-action]");if(!t)return;if(t.dataset.action==="set-status"){const p=projById(state.selectedId);p.status=e.target.value;renderProject(p.medium);toast(`Status → ${STATUS[e.target.value].label}`,"blue");}});
+document.addEventListener("input",e=>{const t=e.target.closest("[data-action]");if(!t)return;if(t.dataset.action==="set-notes"){const p=projById(state.selectedId);if(p)p.notes=e.target.value;}});
+document.addEventListener("change",e=>{const t=e.target.closest("[data-action]");if(!t)return;const a=t.dataset.action;
+  if(a==="set-status"){const p=projById(state.selectedId);p.status=e.target.value;renderProject(p.medium);toast(`Status → ${STATUS[e.target.value].label}`,"blue");}
+  else if(a==="set-due"){const p=projById(state.selectedId);p.due=e.target.value||null;renderProject(p.medium);toast(p.due?`Due ${fmtDate(p.due)}`:"Due date cleared","blue");}
+  else if(a==="toggle-note"){const p=projById(state.selectedId);const v=p.versions.find(x=>x.id===t.dataset.vid);const f=v&&v.feedback[+t.dataset.i];if(!f)return;f.done=e.target.checked;renderProject(p.medium);toast(f.done?"Note marked addressed":"Note reopened",f.done?"":"blue");}
+});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
 
 function markDone(){const p=projById(state.selectedId);p.status="approved";const last=[...p.versions].reverse().find(v=>v.sent)||p.versions[p.versions.length-1];if(last)last.approved=true;renderProject(p.medium);toast(`${p.title} marked done · ${fmtHrsShort(projectHours(p))}h logged`,"gold");}
@@ -791,7 +865,7 @@ function renderClientHome(){
   clearPlayers();
   const mine=projects.filter(p=>p.client===CLIENT_NAME);
   $("#app").innerHTML=`
-    <div class="client-banner">${IC.users}<span><b>Client view.</b> This is what a member sees when they log in. They send you files, review versions, leave notes, and follow progress.</span></div>
+    <div class="client-banner">${IC.users}<span><b>Client portal.</b> This is what a member sees when they log in. They send you files, review versions, leave notes, and follow progress.</span></div>
     <div class="welcome"><span class="wav" style="background:${avColor(CLIENT_NAME)}">${initials(CLIENT_NAME)}</span><div><h1>Hi ${esc(CLIENT_NAME.split(" ")[0])}</h1><div class="ws">Your projects with The Recording Club</div></div></div>
     <div class="dropzone"><div class="dz-ico">${IC.upload}</div><h3>Send us your files</h3><p>Drop stems, mixes, footage, or reference tracks. They go straight to your project folder in Dropbox.</p>
       <div class="dz-chips"><button class="dz-chip" data-action="client-send" data-kind="Stems">${IC.music}Stems</button><button class="dz-chip" data-action="client-send" data-kind="Mix">${IC.sliders}Mix</button><button class="dz-chip" data-action="client-send" data-kind="Footage">${IC.film}Footage</button><button class="dz-chip" data-action="client-send" data-kind="Reference">${IC.file}Reference</button></div>
@@ -812,7 +886,7 @@ function renderClientProject(){
   const shared=p.versions.filter(v=>v.sent);
   const steps=M.steps;const curIdx=steps.findIndex(([k])=>k===p.status);
   $("#app").innerHTML=`
-    <div class="client-banner">${IC.users}<span><b>Client view.</b> ${esc(CLIENT_NAME.split(" ")[0])}'s view of this project.</span></div>
+    <div class="client-banner">${IC.users}<span><b>Client portal.</b> ${esc(CLIENT_NAME.split(" ")[0])}'s view of this project.</span></div>
     <div class="backbar"><button class="back" data-action="client-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>Your projects</button></div>
     <div class="panel phead">
       <div class="phead-top"><div class="ptitle-wrap"><span class="mediaicon" style="width:46px;height:46px;background:${M.accent}">${p.medium==="audio"?IC.sliders:IC.film}</span><div><div class="ptitle">${esc(p.title)}<span class="kind-chip">${esc(p.kind)}</span></div><div class="psub"><span>${M.tool} with The Recording Club</span></div></div></div>${pill(p.status)}</div>
@@ -825,6 +899,7 @@ function renderClientProject(){
       </div>
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="card"><div class="card-h"><h3>${IC.upload}Send us files</h3></div><div class="card-b"><p style="font-size:13px;color:var(--ink-dim);margin:0 0 12px">Add stems, mixes, footage, or references for this project.</p><div class="dz-chips" style="justify-content:flex-start">${(p.medium==="audio"?[["Stems",IC.music],["Mix",IC.sliders],["Reference",IC.file]]:[["Footage",IC.film],["Reference",IC.file]]).map(([k,ic])=>`<button class="dz-chip" data-action="client-send" data-kind="${k}">${ic}${k}</button>`).join("")}</div></div></div>
+        <div class="card"><div class="card-h"><h3>${IC.music}From the studio</h3></div><div class="card-b"><p style="font-size:12.5px;color:var(--ink-dim);margin:0 0 10px">Recorded at The Recording Club, ready for you.</p><div class="files">${p.intake.filter(f=>f.from==="studio").length?p.intake.filter(f=>f.from==="studio").map(f=>fileRow(f)).join(""):`<div class="empty" style="padding:12px">Nothing yet.</div>`}</div></div></div>
         <div class="card"><div class="card-h"><h3>${IC.file}Files you've sent</h3></div><div class="card-b"><div class="files">${p.intake.filter(f=>f.from==="client").length?p.intake.filter(f=>f.from==="client").map(f=>fileRow(f)).join(""):`<div class="empty" style="padding:14px">Nothing sent yet.</div>`}</div></div></div>
       </div>
     </div>`;
@@ -834,10 +909,12 @@ function clientVersion(p,v){
   const bars=waveBars(v.id);
   const player=mediaPlayer(v,p.medium);
   const fb=v.feedback.length?`<div class="feedback">${v.feedback.map(f=>`<div class="fb"><span class="fav" style="background:${avColor(f.who)}">${initials(f.who)}</span><div class="fbody"><div class="fwho">${esc(f.who)}<span class="fd">${fmtDate(f.date)}</span></div><div class="ftext">${esc(f.text)}</div></div></div>`).join("")}</div>`:"";
-  return`<div class="track" data-vid="${v.id}"><div class="track-top"><span class="vbadge ${v.approved?"final":""}">${esc(v.v)}</span><div class="vmeta"><div class="vname">${esc(v.name)}</div><div class="vdate">Shared ${fmtDate(v.date)}</div></div></div>${player}<div class="track-foot"><span class="sent-state" style="color:${v.approved?"var(--st-approved)":"var(--ink-dim)"}">${v.approved?"You approved this":"Leave your notes below"}</span></div>${fb}${!v.approved?`<form data-action="client-note" style="padding:11px 13px;border-top:1px solid var(--line-soft);display:flex;gap:8px;align-items:flex-end"><input type="hidden" name="vid" value="${v.id}"><div class="field" style="flex:1"><label>Your notes</label><input class="inp" name="text" placeholder="e.g. Love it! Vocals up a touch in the chorus"></div><button class="btn primary" type="submit">${IC.send}Send</button></form>`:""}</div>`;
+  return`<div class="track" data-vid="${v.id}"><div class="track-top"><span class="vbadge ${v.approved?"final":""}">${esc(v.v)}</span><div class="vmeta"><div class="vname">${esc(v.name)}</div><div class="vdate">Shared ${fmtDate(v.date)}</div></div></div>${player}<div class="track-foot"><span class="sent-state" style="color:${v.approved?"var(--st-approved)":"var(--ink-dim)"}"><span class="d" style="background:${v.approved?"var(--st-approved)":"var(--ink-faint)"}"></span>${v.approved?"You approved this":"Happy with it? Approve, or leave notes below"}</span>${!v.approved?`<button class="btn sm gold" data-action="client-approve" data-vid="${v.id}">${IC.check}Approve this ${MEDIA[p.medium].fileNoun}</button>`:""}</div>${fb}${!v.approved?`<form data-action="client-note" style="padding:11px 13px;border-top:1px solid var(--line-soft);display:flex;gap:8px;align-items:flex-end"><input type="hidden" name="vid" value="${v.id}"><div class="field" style="flex:1"><label>Your notes</label><input class="inp" name="text" placeholder="e.g. Love it! Vocals up a touch in the chorus"></div><button class="btn primary" type="submit">${IC.send}Send</button></form>`:""}</div>`;
 }
 function submitClientNote(vid,text){const p=projById(state.clientId);const v=p.versions.find(x=>x.id===vid);if(!v)return;const note=(text||"").trim();if(!note){toast("Type a note first");return;}v.feedback.push({who:CLIENT_NAME,date:todayISO(),text:note});p.status="revisions";renderClientProject();toast("Notes sent to The Recording Club","gold");}
 function clientSend(kind){const p=state.clientId?projById(state.clientId):null;const ext=kind==="Footage"?"mp4":(kind==="Stems"?"zip":(kind==="Mix"?"wav":"mp3"));const name=`${(p?p.title:CLIENT_NAME).replace(/\s+/g,"_")}_${kind.toLowerCase()}.${ext}`;if(p){p.intake.push({id:uid("f"),name,from:"client",kind,date:todayISO()});renderClientProject();}toast(`${kind} sent to The Recording Club`,"blue");}
+
+function clientApprove(vid){const p=projById(state.clientId);const v=p&&p.versions.find(x=>x.id===vid);if(!v)return;v.approved=true;p.status="approved";renderClientProject();toast("Approved! We'll get your final files over.","gold");}
 
 /* ============ MODALS ============ */
 function openModal(html){$("#modal").innerHTML=html;$("#scrim").classList.add("open");}
